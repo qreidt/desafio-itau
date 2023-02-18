@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\UserType;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Rules\MatchCnpjRule;
+use App\Rules\MatchCpfRule;
 use Illuminate\Auth\Events\Registered;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\Rules\Enum;
+use Illuminate\Validation\Rules\Password;
 
 class RegisteredUserController extends Controller
 {
@@ -18,24 +19,41 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(Request $request): Response
+    public function store(): JsonResponse
     {
-        $request->validate([
+
+        $data = request()->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'password' => ['required', 'confirmed', Password::min(8)->symbols()->mixedCase() ],
+            'transaction_password' => ['required', 'confirmed', 'string', 'min:4', 'max:10' ],
+            'type' => ['required', new Enum(UserType::class)]
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+        ['document' => $document] = request()->validate([
+            'document' => [
+                'required', 'string',
+                match ($data['type']) {
+                    UserType::Fisical->value => new MatchCpfRule(),
+                    UserType::Legal->value => new MatchCnpjRule(),
+                }
+            ]
         ]);
+
+        $data['document'] = $document;
+        $data['password'] = bcrypt($data['password']);
+        $data['transaction_password'] = bcrypt($data['transaction_password']);
+
+        $user = User::create($data);
 
         event(new Registered($user));
 
-        Auth::login($user);
+        $token = $user->createToken(
+            request()->header('user-agent', 'default')
+        );
 
-        return response()->noContent();
+        return response()->json([
+            'user_id' => $user->id,
+            'token' => $token->plainTextToken
+        ]);
     }
 }
