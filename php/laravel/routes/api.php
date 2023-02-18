@@ -29,4 +29,6 @@ Route::post('/login', [Auth\AuthenticatedSessionController::class, 'store'])
 Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/logout', [Auth\AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
+
+    Route::apiResource('/transfers', Controllers\TransferController::class);
 });
