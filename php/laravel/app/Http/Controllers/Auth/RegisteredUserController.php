@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Enums\UserType;
 use App\Http\Controllers\Controller;
+use App\Models\BankAccount;
 use App\Models\User;
 use App\Rules\MatchCnpjRule;
 use App\Rules\MatchCpfRule;
@@ -44,6 +45,8 @@ class RegisteredUserController extends Controller
         $data['transaction_password'] = bcrypt($data['transaction_password']);
 
         $user = User::create($data);
+
+        BankAccount::factory()->create(['user_id' => $user->id]);
 
         event(new Registered($user));
 
