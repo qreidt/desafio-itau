@@ -25,3 +25,8 @@ Route::post('/register', [Auth\RegisteredUserController::class, 'store'])
 
 Route::post('/login', [Auth\AuthenticatedSessionController::class, 'store'])
     ->name('login');
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::delete('/logout', [Auth\AuthenticatedSessionController::class, 'destroy'])
+        ->name('logout');
+});
