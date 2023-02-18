@@ -48,7 +48,7 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
 
         $token = $user->createToken(
-            request()->header('user-agent', 'default')
+            request()->header('user-agent', 'no-device')
         );
 
         return response()->json([
