@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\TransferType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Transfer extends Model
 {
@@ -23,4 +24,24 @@ class Transfer extends Model
     protected $casts = [
         'type' => TransferType::class
     ];
+
+    public function sender_user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'sender_user_id');
+    }
+
+    public function receiver_user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'receiver_user_id');
+    }
+
+    public function sender_account(): BelongsTo
+    {
+        return $this->belongsTo(BankAccount::class, 'sender_account_id');
+    }
+
+    public function receiver_account(): BelongsTo
+    {
+        return $this->belongsTo(BankAccount::class, 'receiver_account_id');
+    }
 }
