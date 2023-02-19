@@ -12,10 +12,6 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnUpdate()->cascadeOnDelete();
             $table->string('number');
-            $table->unsignedInteger('agency');
-            $table->enum('bank', array_map(fn($enum) => $enum->value, Banks::cases()));
-            $table->string('state');
-            $table->string('city');
             $table->bigInteger('balance');
             $table->timestamps();
         });

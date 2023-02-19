@@ -16,10 +16,6 @@ use App\Http\Controllers\Auth;
 |
 */
 
-Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
-    return $request->user();
-});
-
 Route::post('/register', [Auth\RegisteredUserController::class, 'store'])
     ->name('register');
 
@@ -27,6 +23,11 @@ Route::post('/login', [Auth\AuthenticatedSessionController::class, 'store'])
     ->name('login');
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/auth', function () {
+        return auth()->user()
+            ->load('bank_accounts');
+    });
+
     Route::delete('/logout', [Auth\AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
 

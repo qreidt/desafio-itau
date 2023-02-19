@@ -36,7 +36,7 @@ class RegisteredUserController extends Controller
                 match ($data['type']) {
                     UserType::Fisical->value => new MatchCpfRule(),
                     UserType::Legal->value => new MatchCnpjRule(),
-                }
+                }, 'unique:' . User::class
             ]
         ]);
 
@@ -46,7 +46,7 @@ class RegisteredUserController extends Controller
 
         $user = User::create($data);
 
-        BankAccount::factory()->create(['user_id' => $user->id]);
+        $bank_account = BankAccount::factory()->create(['user_id' => $user->id]);
 
         event(new Registered($user));
 
@@ -54,8 +54,10 @@ class RegisteredUserController extends Controller
             request()->header('user-agent', 'no-device')
         );
 
+        $user->bank_accounts = collect($bank_account);
+
         return response()->json([
-            'user_id' => $user->id,
+            'user' => $user,
             'token' => $token->plainTextToken
         ]);
     }
