@@ -54,7 +54,7 @@ class RegisteredUserController extends Controller
             request()->header('user-agent', 'no-device')
         );
 
-        $user->bank_accounts = collect($bank_account);
+        $user->bank_accounts = collect([$bank_account]);
 
         return response()->json([
             'user' => $user,

@@ -30,6 +30,12 @@ class TransferController extends Controller
         $transfers = Transfer::query()
             ->where('sender_user_id', '=', $user->id)
             ->orWhere('receiver_user_id', '=', $user->id)
+            ->with([
+                'sender_user' => fn($q) => $q->select(['id', 'document', 'name']),
+                'receiver_user' => fn($q) => $q->select(['id', 'document', 'name']),
+                'sender_account' => fn($q) => $q->select(['id', 'number']),
+                'receiver_account' => fn($q) => $q->select(['id', 'number']),
+            ])
             ->get();
 
         return response()->json($transfers);
@@ -49,16 +55,16 @@ class TransferController extends Controller
         DB::beginTransaction();
 
         $transfer = Transfer::create($data);
-        BankAccount::query()->find($data['sender_account_id'])?->decrement('balance', $data['value']);
-        BankAccount::query()->find($data['receiver_account_id'])?->increment('balance', $data['value']);
+        BankAccount::query()->where('id', '=', $data['sender_account_id'])->decrement('balance', $data['value']);
+        BankAccount::query()->where('id', '=', $data['receiver_account_id'])->increment('balance', $data['value']);
 
         DB::commit();
 
         $transfer->load([
             'sender_user' => fn($q) => $q->select(['id', 'document', 'name']),
             'receiver_user' => fn($q) => $q->select(['id', 'document', 'name']),
-            'sender_account' => fn($q) => $q->select(['id', 'balance']),
-            'receiver_account' => fn($q) => $q->select(['id', 'balance']),
+            'sender_account' => fn($q) => $q->select(['id', 'number', 'balance']),
+            'receiver_account' => fn($q) => $q->select(['id', 'number', 'balance']),
         ]);
 
         return response()->json($transfer);
@@ -76,6 +82,8 @@ class TransferController extends Controller
         $transfer->load([
             'sender_user' => fn($q) => $q->select(['id', 'document', 'name']),
             'receiver_user' => fn($q) => $q->select(['id', 'document', 'name']),
+            'sender_account' => fn($q) => $q->select(['id', 'number']),
+            'receiver_account' => fn($q) => $q->select(['id', 'number']),
         ]);
 
         return response()->json($transfer);
@@ -107,7 +115,15 @@ class TransferController extends Controller
         $data = $this->validateSenderData();
         $data = [...$data, ...$this->validateReceiverData()];
         $data = [...$data, ...$this->validateTransferType()];
-        return [...$data, ...$this->validateTransferValue($data['type'])];
+        $data = [...$data, ...$this->validateTransferValue($data['type'])];
+
+        if ($data['sender_account_id'] == $data['receiver_account_id']) {
+            throw ValidationException::withMessages([
+                'receiver_account_number' => 'Não é permitido realizar uma transferência para a mesma conta bancária.'
+            ]);
+        }
+
+        return $data;
     }
 
     public function validateSenderData(): array
@@ -118,8 +134,7 @@ class TransferController extends Controller
                 'required', 'integer',
                 fn($id) => BankAccount::query()
                     ->where('user_id', '=', $user_id)
-                    ->where('id', '=', $id)
-                    ->exists(),
+                    ->where('id', '=', $id)->exists(),
             ],
         ]);
 
@@ -128,19 +143,24 @@ class TransferController extends Controller
 
     public function validateReceiverData(): array
     {
-        ['receiver_user_id' => $receiver_user_id] = request()->validate([
-            'receiver_user_id' => ['required', 'integer', 'exists:users,id' ],
+        ['receiver_user_document' => $receiver_user_document] = request()->validate([
+            'receiver_user_document' => ['required', 'string', 'exists:users,document' ],
         ]);
 
-        ['receiver_account_id' => $receiver_account_id] = request()->validate([
-            'receiver_account_id' => [
-                'required', 'integer',
-                fn($id) => BankAccount::query()
+        ['receiver_account_number' => $receiver_account_number] = request()->validate([
+            'receiver_account_number' => [
+                'required', 'string',
+                fn($v) => BankAccount::query()
                     ->where('user_id', '=', auth()->id())
-                    ->where('id', '=', $id)
-                    ->exists(),
+                    ->where('number', '=', $v)->exists(),
             ]
         ]);
+
+        $receiver_user_id = User::query()->select('id')
+            ->firstWhere('document', '=', $receiver_user_document)?->id;
+
+        $receiver_account_id = BankAccount::query()->select('id')
+            ->firstWhere('number', '=', $receiver_account_number)?->id;
 
         return compact('receiver_user_id', 'receiver_account_id');
     }
