@@ -24,5 +24,6 @@ Desafio Itaú em várias linguagens com o objetivo de se divertir e aprender
 14. Se a transferência não foi completa, exibir a mensagem de erro explicando o motivo. Ex: "Sua transferência não foi completada pois <motivo>"
 
 ## Melhorias propostas além que já foi definido
-1. Criptografar senha armazenada
-2. Autenticação com multiplos dígitos de senha
+1. Senha especial para realizar transações
+2. Criptografar senhas armazenadas
+3. Autenticação com multiplos dígitos de senha
