@@ -4,7 +4,6 @@ namespace App\Http\Requests\Auth;
 
 use App\Models\User;
 use App\Traits\RateLimitsRequests;
-use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
