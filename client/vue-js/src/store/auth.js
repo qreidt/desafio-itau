@@ -37,6 +37,9 @@ export const useAuthStore = defineStore('auth', {
             writeStateToLocalStorage(data);
         },
 
-
+        async logout() {
+            await axios.delete('/logout');
+            localStorage.removeItem('auth');
+        }
     }
 });

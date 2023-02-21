@@ -20,6 +20,15 @@ import GuestLayout from "@/layouts/GuestLayout.vue";
                   id="document" name="document" placeholder="CPF (xxx.xxx.xxx-xx) ou CNPJ (xx.xxx.xxx/xxxx-xx)"  type="text"  required
                   class="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
               />
+              <p v-if="errors['document.required']" class="mt-1.5 text-xs text-red-500">
+                {{ errors['document.required'] }}
+              </p>
+              <p v-if="errors['document.auth']" class="mt-1.5 text-xs text-red-500">
+                {{ errors['document.auth'] }}
+              </p>
+              <p v-if="errors['document.throttle']" class="mt-1.5 text-xs text-red-500">
+                {{ errors['document.throttle'] }}
+              </p>
             </div>
           </div>
 
@@ -30,6 +39,9 @@ import GuestLayout from "@/layouts/GuestLayout.vue";
                   v-model="form.password" id="password" name="password" type="password"
                   autocomplete="current-password" placeholder="*********" required
                   class="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"/>
+              <p v-if="errors['password.required']" class="mt-1.5 text-xs text-red-500">
+                {{ errors['password.required'] }}
+              </p>
             </div>
           </div>
 
@@ -53,16 +65,15 @@ import {useAuthStore} from "@/store/auth";
 const AuthStore = useAuthStore();
 
 export default defineComponent({
-  name: "RegisterView",
+
+  name: "LoginView",
+
   data() {
     return {
-      errors: {
-        document: null,
-        password: null,
-      },
+      errors: {},
       form: {
-        document: '461.700.428-93',
-        password: 'Passw0rd!',
+        document: '',
+        password: '',
       }
     };
   },
@@ -72,9 +83,26 @@ export default defineComponent({
       try {
         await AuthStore.login(this.form.document, this.form.password);
       } catch (e) {
-        //
+        if (e.response?.data?.errors && e.response.status === 422) {
+          const errors = e.response.data.errors;
+
+          if (Object.keys(errors).length === 0) {
+            this.errors = { 'document.auth': e.response.data.message };
+            return;
+          }
+
+          this.errors = e.response.data.errors;
+        }
+
+        if (e.response?.data?.message && e.response.status === 429) {
+          this.errors = { 'document.throttle' : e.response.data.message };
+        }
       }
     }
+  },
+
+  mounted() {
+    this.submitLogin();
   }
 });
 </script>
