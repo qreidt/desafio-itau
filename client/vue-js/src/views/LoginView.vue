@@ -1,12 +1,17 @@
 <script setup>
 import { vMaska } from "maska"
 import GuestLayout from "@/layouts/GuestLayout.vue";
+import { RouterLink } from "vue-router";
+import {useAuthStore} from "@/store/auth";
+const AuthStore = useAuthStore();
 </script>
 
 <template>
   <GuestLayout>
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
-      <h2 class="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">Acesse sua conta</h2>
+      <h2 class="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+        Acesse sua conta
+      </h2>
     </div>
 
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
@@ -46,63 +51,99 @@ import GuestLayout from "@/layouts/GuestLayout.vue";
           </div>
 
           <div>
-            <button type="submit"
-                    class="flex w-full justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+            <button
+                type="submit"
+                :disabled="loading"
+                class="flex w-full justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-75"
+            >
               Acessar
             </button>
           </div>
         </form>
+
+        <div class="mt-6">
+          <div class="relative">
+            <div class="absolute inset-0 flex items-center">
+              <div class="w-full border-t border-gray-300" />
+            </div>
+            <div class="relative flex justify-center text-sm">
+              <span class="bg-white px-2 text-gray-500">ou registre-se</span>
+            </div>
+          </div>
+
+          <div class="mt-6">
+            <div>
+              <RouterLink
+                  to="/register"
+                  class="inline-flex w-full justify-center rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-500 shadow-sm hover:bg-gray-50">
+                Registre-se
+              </RouterLink>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </GuestLayout>
 </template>
 
 <script>
-
 import { defineComponent } from "vue";
-import {useAuthStore} from "@/store/auth";
-
-const AuthStore = useAuthStore();
+import { useAuthStore } from "@/store/auth";
+import axios from "axios";
+import router from "@/router";
 
 export default defineComponent({
 
   name: "LoginView",
 
   data() {
+
     return {
+      AuthStore: useAuthStore(),
+
       errors: {},
+
+      loading: false,
+
       form: {
         document: '',
         password: '',
-      }
+      },
     };
   },
 
   methods: {
     async submitLogin() {
+
       try {
-        await AuthStore.login(this.form.document, this.form.password);
+        this.loading = true;
+        this.errors = {};
+
+        const { data } = await axios.post('/login', this.form);
+        await this.AuthStore.changeLoginState(data);
+
+        await router.push({name: 'home'});
+
       } catch (e) {
         if (e.response?.data?.errors && e.response.status === 422) {
           const errors = e.response.data.errors;
 
           if (Object.keys(errors).length === 0) {
             this.errors = { 'document.auth': e.response.data.message };
-            return;
+          } else {
+            this.errors = e.response.data.errors;
           }
 
-          this.errors = e.response.data.errors;
         }
 
         if (e.response?.data?.message && e.response.status === 429) {
           this.errors = { 'document.throttle' : e.response.data.message };
         }
+
+      } finally {
+        this.loading = false;
       }
     }
   },
-
-  mounted() {
-    this.submitLogin();
-  }
 });
 </script>
