@@ -3,7 +3,9 @@ import AppLayout from "@/layouts/AppLayout.vue";
 import { useAuthStore } from "@/store/auth";
 import {computed} from "vue";
 
+useAuthStore().refresh();
 const auth = useAuthStore().getUser;
+
 const auth_type = {
     'FISICAL': 'Pessoa Física',
     'LEGAL': 'Pessoa Jurídica'
@@ -14,7 +16,7 @@ const currency_formatter = Intl.NumberFormat('pt-BR', {
     currency: 'BRL'
 });
 
-const bank_accounts = useAuthStore().getBankAccounts
+const bank_accounts = computed(() => useAuthStore().getBankAccounts)
 </script>
 
 <template>
@@ -69,7 +71,7 @@ const bank_accounts = useAuthStore().getBankAccounts
               {{ bank_account.number }}
             </dt>
             <dd class="mt-1 flex justify-between gap-x-6 sm:mt-0 sm:flex-auto text-gray-900">
-              {{ currency_formatter.format(bank_account.balance) }}
+              {{ currency_formatter.format(bank_account.balance / 100) }}
             </dd>
           </div>
         </dl>
@@ -84,9 +86,6 @@ import {defineComponent} from "vue";
 
 export default defineComponent({
     name: 'HomeView',
-
-
-
 });
 
 </script>

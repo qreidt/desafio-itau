@@ -24,7 +24,7 @@ export const useAuthStore = defineStore('auth', {
     getters: {
         isLoggedIn: (state) => state.token != null,
         getBankAccounts: (state) => state.user?.bank_accounts,
-        getUser: (state) => state.user
+        getUser: (state) => state.user,
     },
 
     actions: {
@@ -32,6 +32,11 @@ export const useAuthStore = defineStore('auth', {
             this.user = user;
             this.token = token;
             writeStateToLocalStorage({user, token});
+        },
+
+        async refresh() {
+            const { data } = await axios.get('/auth');
+            this.user = data;
         },
 
         logout() {
