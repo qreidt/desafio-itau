@@ -24,8 +24,7 @@ Route::post('/login', [Auth\AuthenticatedSessionController::class, 'store'])
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/auth', function () {
-        return auth()->user()
-            ->load('bank_accounts');
+        return auth()->user()->load('bank_accounts');
     });
 
     Route::delete('/logout', [Auth\AuthenticatedSessionController::class, 'destroy'])

@@ -82,8 +82,14 @@ class Handler extends ExceptionHandler
         foreach ($failed_rules as $input => $rules) {
 
             foreach (array_keys($rules) as $i => $rule) {
-                $rule = strtolower($rule);
 
+                // Validações customizadas e sem nome de regra
+                if (class_exists($rule)) {
+                    $rule = last(explode('\\', $rule));
+                }
+
+
+                $rule = strtolower($rule);
                 $key = "$input.$rule";
 
                 $result[$key] = $messages[$input][$i];

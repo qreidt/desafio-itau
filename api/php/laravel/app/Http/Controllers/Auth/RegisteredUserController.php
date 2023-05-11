@@ -26,23 +26,17 @@ class RegisteredUserController extends Controller
         $data = request()->validate([
             'name' => ['required', 'string', 'max:255'],
             'password' => ['required', 'confirmed', Password::min(8)->symbols()->mixedCase() ],
-            'transaction_password' => ['required', 'confirmed', 'string', 'min:4', 'max:10' ],
-            'type' => ['required', new Enum(UserType::class)]
+            'transaction_password' => ['required', 'confirmed', 'string', 'digits_between:4,10' ],
         ]);
 
         ['document' => $document] = request()->validate([
-            'document' => [
-                'required', 'string',
-                match ($data['type']) {
-                    UserType::Fisical->value => new MatchCpfRule(),
-                    UserType::Legal->value => new MatchCnpjRule(),
-                }, 'unique:' . User::class
-            ]
+            'document' => [ 'required', 'regex:/(^\d{3}\.\d{3}\.\d{3}-\d{2}$)|(^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$)/' ]
         ]);
 
         $data['document'] = $document;
         $data['password'] = bcrypt($data['password']);
         $data['transaction_password'] = bcrypt($data['transaction_password']);
+        $data['type'] = UserType::tryFromLength($document);
 
         $user = User::create($data);
 

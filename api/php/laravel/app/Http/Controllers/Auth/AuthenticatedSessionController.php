@@ -21,6 +21,8 @@ class AuthenticatedSessionController extends Controller
 
         $token = $user->createToken($request->header('user-agent', 'no-device'));
 
+        $user->load('bank_accounts');
+
         return response()->json([
             'user' => $user,
             'token' => $token->plainTextToken

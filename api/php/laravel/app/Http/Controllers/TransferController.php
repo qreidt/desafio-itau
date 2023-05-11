@@ -8,13 +8,13 @@ use App\Models\Transfer;
 use App\Models\User;
 use App\Traits\RateLimitsRequests;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Http\Response;
 
 class TransferController extends Controller
 {
@@ -36,6 +36,7 @@ class TransferController extends Controller
                 'sender_account' => fn($q) => $q->select(['id', 'number']),
                 'receiver_account' => fn($q) => $q->select(['id', 'number']),
             ])
+            ->when(request('order-by'), fn($q, $value) => $q->orderBy($value))
             ->get();
 
         return response()->json($transfers);
@@ -49,7 +50,7 @@ class TransferController extends Controller
         $data = $this->validateStoreRequest();
 
         if (! $this->authorizeStoreRequest()) {
-            abort(\Illuminate\Http\Response::HTTP_UNAUTHORIZED, 'Transação não autorizada');
+            abort(Response::HTTP_UNAUTHORIZED, 'Transação não autorizada');
         }
 
         DB::beginTransaction();

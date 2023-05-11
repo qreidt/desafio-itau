@@ -22,7 +22,8 @@ class Transfer extends Model
     ];
 
     protected $casts = [
-        'type' => TransferType::class
+        'type' => TransferType::class,
+        'created_at' => 'datetime'
     ];
 
     public function sender_user(): BelongsTo
