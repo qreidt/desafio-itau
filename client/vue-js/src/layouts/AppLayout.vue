@@ -13,10 +13,12 @@
         <RouterLink to="/transactions">Transações</RouterLink>
       </nav>
       <div class="flex flex-1 items-center justify-end gap-x-8">
-        <a href="#" class="-m-1.5 p-1.5">
-          <span class="sr-only">Your profile</span>
-          <img class="h-8 w-8 rounded-full bg-gray-800" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="" />
-        </a>
+        <span
+          @click="logout"
+          class="py-1.5 px-2 rounded bg-gray-100 hover:bg-gray-200 cursor-pointer text-sm"
+        >
+          Logout
+        </span>
       </div>
     </div>
     <Dialog as="div" class="lg:hidden" @close="mobileMenuOpen = false" :open="mobileMenuOpen">
@@ -50,13 +52,18 @@ import { ref } from 'vue'
 import { Dialog, DialogPanel } from '@headlessui/vue'
 import { Bars3Icon } from '@heroicons/vue/20/solid'
 import { XMarkIcon } from '@heroicons/vue/24/outline';
+import {useAuthStore} from "@/store/auth";
+import router from "@/router";
 
 const mobileMenuOpen = ref(false);
 
-const navigation = [
-    { name: 'Home', href: '#' },
-    { name: 'Invoices', href: '#' },
-    { name: 'Clients', href: '#' },
-    { name: 'Expenses', href: '#' },
-]
+async function logout() {
+    try {
+      await useAuthStore().logout();
+    } catch (e) {
+        //
+    }
+
+    await router.push('/login');
+}
 </script>

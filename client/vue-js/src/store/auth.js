@@ -11,7 +11,11 @@ function loadStateFromLocalStorage() {
         };
     }
 
-    return JSON.parse(local);
+    const data = JSON.parse(local);
+
+    axios.defaults.headers.common.Authorization = `Bearer ${data.token}`;
+
+    return data;
 }
 
 function writeStateToLocalStorage(state) {
@@ -31,6 +35,9 @@ export const useAuthStore = defineStore('auth', {
         changeLoginState({user, token}) {
             this.user = user;
             this.token = token;
+
+            axios.defaults.headers.common.Authorization = `Bearer ${token}`;
+
             writeStateToLocalStorage({user, token});
         },
 
@@ -41,7 +48,14 @@ export const useAuthStore = defineStore('auth', {
 
         logout() {
             localStorage.removeItem('auth');
-            axios.delete('/logout');
+            axios.defaults.headers.common.Authorization = null;
+
+            axios.delete('/logout', { headers: {
+                Authorization: `Bearer ${this.token}`
+            }});
+
+            this.user = null;
+            this.token = null;
         }
     }
 });
