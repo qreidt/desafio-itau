@@ -20,7 +20,7 @@ axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
 axios.defaults.headers.common.Accept = 'application/json';
 
 if (auth.isLoggedIn) {
-    axios.defaults.headers.common.Authorization = auth.token;
+    axios.defaults.headers.common.Authorization = `Bearer ${auth.token}`;
 }
 
 router.beforeEach((to, from, next) => {

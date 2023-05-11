@@ -24,6 +24,7 @@ export const useAuthStore = defineStore('auth', {
     getters: {
         isLoggedIn: (state) => state.token != null,
         getBankAccounts: (state) => state.user?.bank_accounts,
+        getUser: (state) => state.user
     },
 
     actions: {

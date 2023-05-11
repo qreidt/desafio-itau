@@ -1,14 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import LoginView from "@/views/LoginView.vue";
 import RegisterView from "@/views/RegisterView.vue";
+import HomeView from "@/views/HomeView.vue";
+import TransactionsView from "@/views/TransactionsView.vue";
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
       path: '/',
-      name: 'home',
-      meta: { requires_auth: true, guest_only: false }
+      name: 'welcome',
+      meta: { requires_auth: false, guest_only: true }
     },
     {
       path: '/login',
@@ -23,6 +25,18 @@ const router = createRouter({
       component: RegisterView,
       meta: { requires_auth: false, guest_only: true }
     },
+    {
+      path: '/home',
+      name: 'home',
+      component: HomeView,
+      meta: { requires_auth: true, guest_only: false }
+    },
+    {
+      path: '/transactions',
+      name: 'transactions',
+      component: TransactionsView,
+      meta: { requires_auth: true, guest_only: false }
+    }
   ]
 });
 

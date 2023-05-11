@@ -1,5 +1,5 @@
 <script setup>
-import {vMaska} from "maska"
+import { vMaska } from "maska"
 import GuestLayout from "@/layouts/GuestLayout.vue";
 </script>
 
