@@ -15,7 +15,19 @@ func NewApp() *App {
 }
 
 func (app *App) SetupRoutes() {
-	//
+	//app.router.GET('/auth', )
+	//app.router.POST('/register', )
+	//app.router.POST('/login', )
+	//app.router.POST('/logout', )
+
+	//transfers := app.router.Group("/transfers")
+	//{
+	//	//transfers.GET('/', )
+	//	//transfers.POST('/', )
+	//	//transfers.GET('/:transfer', )
+	//	//transfers.PATCH('/:transfer', )
+	//	//transfers.DELETE('/:transfer', )
+	//}
 }
 
 func (app *App) RunServer(address string) {
