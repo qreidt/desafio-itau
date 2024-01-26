@@ -69,22 +69,28 @@ func (c *AuthController) Login(ctx *gin.Context) {
 	// Start Request Struct
 	var form LoginRequest
 
+	// Validate JSON and fill request data
+	if err := ctx.ShouldBindJSON(&form); err != nil {
+		exceptions.NewInvalidRequestBody(err, ctx)
+		return
+	}
+
 	// Validate Request Struct
 	if err := requests.Validate(form); err != nil {
 		requests.NewUnprocessableEntityException(err, form, ctx)
 		return
 	}
 
-	if user, token, err := c.authService.AuthenticateUser(form.Document, form.Password); err != nil {
+	user, token, err := c.authService.AuthenticateUser(form.Document, form.Password)
+	if err != nil {
 		exceptions.NewUnexpectedError(err, ctx)
 		return
-	} else {
-		ctx.JSON(201, gin.H{
-			"user":  user,
-			"token": token,
-		})
 	}
 
+	ctx.JSON(201, gin.H{
+		"user":  user,
+		"token": token,
+	})
 }
 
 type RegisterRequest struct {

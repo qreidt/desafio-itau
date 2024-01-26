@@ -8,12 +8,21 @@ import (
 )
 
 type AuthService struct {
-	UserService    *UserService
-	UserRepository *repositories.UserRepository
+	UserService     *UserService
+	UserRepository  *repositories.UserRepository
+	TokenRepository *repositories.TokenRepository
 }
 
-func NewAuthService(userService *UserService, userRepository *repositories.UserRepository) *AuthService {
-	return &AuthService{UserService: userService, UserRepository: userRepository}
+func NewAuthService(
+	userService *UserService,
+	userRepository *repositories.UserRepository,
+	tokenRepository *repositories.TokenRepository,
+) *AuthService {
+	return &AuthService{
+		UserService:     userService,
+		UserRepository:  userRepository,
+		TokenRepository: tokenRepository,
+	}
 }
 
 func (s *AuthService) AuthenticateUser(document string, password string) (*models.User, string, error) {
@@ -30,5 +39,7 @@ func (s *AuthService) AuthenticateUser(document string, password string) (*model
 		return nil, "", errors.New("senhas não coincidem")
 	}
 
-	return authUser, "", nil
+	// Simplify exposed token
+	_, publicToken := s.TokenRepository.Create(authUser.ID)
+	return authUser, publicToken, nil
 }

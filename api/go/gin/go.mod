@@ -5,7 +5,7 @@ go 1.21.5
 require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-playground/validator/v10 v10.17.0
-	go.uber.org/dig v1.17.1
+	github.com/gofrs/uuid v4.4.0+incompatible
 	golang.org/x/crypto v0.18.0
 	gorm.io/driver/sqlite v1.5.4
 	gorm.io/gorm v1.25.5

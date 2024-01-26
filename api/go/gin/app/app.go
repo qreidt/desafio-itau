@@ -17,7 +17,8 @@ type App struct {
 }
 
 type Repositories struct {
-	UserRepository *repositories.UserRepository
+	UserRepository  *repositories.UserRepository
+	TokenRepository *repositories.TokenRepository
 }
 
 type Services struct {
@@ -31,13 +32,14 @@ type Controllers struct {
 
 func NewApp(db *gorm.DB) *App {
 	r := Repositories{
-		UserRepository: repositories.NewUserRepository(db),
+		UserRepository:  repositories.NewUserRepository(db),
+		TokenRepository: repositories.NewTokenRepository(db),
 	}
 
 	userService := services.NewUserService(r.UserRepository)
 	s := Services{
 		UserService: userService,
-		AuthService: services.NewAuthService(userService, r.UserRepository),
+		AuthService: services.NewAuthService(userService, r.UserRepository, r.TokenRepository),
 	}
 
 	c := Controllers{
