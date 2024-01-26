@@ -2,19 +2,25 @@ package controllers
 
 import (
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"itau-api/app/exceptions"
 	"itau-api/app/models"
-	"itau-api/app/repositories"
 	"itau-api/app/requests"
+	"itau-api/app/services"
 )
 
 type AuthController struct {
-	userRepository *repositories.UserRepository
+	userService *services.UserService
+	authService *services.AuthService
 }
 
-func NewUserController(db *gorm.DB) *AuthController {
-	return &AuthController{userRepository: repositories.NewUserRepository(db)}
+func NewAuthController(
+	userService *services.UserService,
+	authService *services.AuthService,
+) *AuthController {
+	return &AuthController{
+		userService: userService,
+		authService: authService,
+	}
 }
 
 func (c *AuthController) Register(ctx *gin.Context) {
@@ -34,31 +40,23 @@ func (c *AuthController) Register(ctx *gin.Context) {
 	}
 
 	// Validate if user document is already in use
-	var user models.User
-	if _ = c.userRepository.FindByDocument(form.Document, &user); user != (models.User{}) {
+	if user, _ := c.userService.FindUserByDocument(form.Document); user != nil {
 		ctx.JSON(422, gin.H{
 			"document.unique": "Este documento já está em uso.",
 		})
 		return
 	}
 
-	// Hash user passowrd
-	if hashedPassword, err := models.HashPassword(form.Password); err != nil {
-		exceptions.NewUnexpectedError(err, ctx)
-		return
-	} else {
+	// Create User
+	user, err := c.userService.CreateUser(&models.User{
+		Name:     form.Name,
+		Document: form.Document,
+		Password: form.Password,
+		Balance:  0,
+	})
 
-		// Fill user model with request and default data
-		user = models.User{
-			Name:     form.Name,
-			Document: form.Document,
-			Password: hashedPassword,
-			Balance:  0,
-		}
-	}
-
-	// Save user
-	if err := c.userRepository.Create(&user); err != nil {
+	// Something Happened
+	if err != nil {
 		exceptions.NewUnexpectedError(err, ctx)
 		return
 	}
@@ -71,39 +69,22 @@ func (c *AuthController) Login(ctx *gin.Context) {
 	// Start Request Struct
 	var form LoginRequest
 
-	// Validate JSON and fill request data
-	if err := ctx.ShouldBindJSON(&form); err != nil {
-		exceptions.NewInvalidRequestBody(err, ctx)
-		return
-	}
-
 	// Validate Request Struct
 	if err := requests.Validate(form); err != nil {
 		requests.NewUnprocessableEntityException(err, form, ctx)
 		return
 	}
 
-	// Find User By Document
-	var user models.User
-	if err := c.userRepository.FindByDocument(form.Document, &user); err != nil {
-		ctx.JSON(401, gin.H{
-			"message": "Credenciais não encontradas",
-		})
+	if user, token, err := c.authService.AuthenticateUser(form.Document, form.Password); err != nil {
+		exceptions.NewUnexpectedError(err, ctx)
 		return
+	} else {
+		ctx.JSON(201, gin.H{
+			"user":  user,
+			"token": token,
+		})
 	}
 
-	// Check password
-	if same := models.ComparePassword(user.Password, form.Password); !same {
-		ctx.JSON(401, gin.H{
-			"message": "Credenciais não encontradas",
-		})
-		return
-	}
-
-	ctx.JSON(201, gin.H{
-		"user":  user,
-		"token": "",
-	})
 }
 
 type RegisterRequest struct {
