@@ -1,7 +1,6 @@
 package repositories
 
 import (
-	"fmt"
 	"gorm.io/gorm"
 	"itau-api/app/models"
 )
@@ -27,14 +26,10 @@ func (repo *UserRepository) FindById(id uint64) (*models.User, error) {
 	return &user, result.Error
 }
 
-// FindByDocument Find a user from a document
-func (repo *UserRepository) FindByDocument(document string) (*models.User, error) {
-	var user models.User
-	result := repo.db.First(&models.User{}, "document = ?", document)
-
-	fmt.Println(result)
-
-	return &user, result.Error
+// FindByDocument Find an user from a document
+func (repo *UserRepository) FindByDocument(document string, model *models.User) error {
+	result := repo.db.First(model, "document = ?", document)
+	return result.Error
 }
 
 // Update a user

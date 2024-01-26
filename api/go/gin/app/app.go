@@ -22,7 +22,7 @@ func (app *App) SetupRoutes() {
 	authController := controllers.NewUserController(app.db)
 	//app.router.GET('/auth', )
 	app.router.POST("/register", authController.Register)
-	//app.router.POST('/login', )
+	app.router.POST("/login", authController.Login)
 	//app.router.POST('/logout', )
 
 	//transfers := app.router.Group("/transfers")
