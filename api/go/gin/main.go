@@ -12,21 +12,20 @@ func main() {
 	fmt.Println("Starting Web Server on Port 4000")
 
 	// Migrate Database
-	MigrateDatabase()
+	db := MigrateDatabase()
 
 	// Run Server
-	app := app.NewApp()
-	app.SetupRoutes()
-	app.RunServer(":4000")
+	server := app.NewApp(db)
+	server.SetupRoutes()
+	server.RunServer(":4000")
 }
 
-func MigrateDatabase() {
+func MigrateDatabase() *gorm.DB {
 	db, err := gorm.Open(sqlite.Open("./tmp/database.sqlite"), &gorm.Config{})
-
 	if err != nil {
 		panic("Failed to connect to database.")
 	}
 
-	var users models.User
-	db.AutoMigrate(&users)
+	db.AutoMigrate(&models.User{})
+	return db
 }
