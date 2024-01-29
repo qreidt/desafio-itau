@@ -19,11 +19,9 @@ func (repo *UserRepository) Create(user *models.User) error {
 }
 
 // FindById Find an user from by ID
-func (repo *UserRepository) FindById(id uint64) (*models.User, error) {
-	var user models.User
+func (repo *UserRepository) FindById(user *models.User, id uint64) error {
 	result := repo.db.First(&user, id)
-
-	return &user, result.Error
+	return result.Error
 }
 
 // FindByDocument Find an user from a document

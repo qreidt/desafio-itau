@@ -34,6 +34,11 @@ func (repo *TokenRepository) Create(userId uint64) (*models.ApiToken, string) {
 	return &token, publicToken
 }
 
+func (repo *TokenRepository) FindByIdAndToken(token *models.ApiToken, tokenId string, tokenString string) error {
+	result := repo.db.First(&token, "id = ? and public_token = ?", tokenId, tokenString)
+	return result.Error
+}
+
 func randStringBytes(n uint8) string {
 	b := make([]byte, n)
 
