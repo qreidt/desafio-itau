@@ -26,6 +26,11 @@ func MigrateDatabase() *gorm.DB {
 		panic("Failed to connect to database.")
 	}
 
-	db.AutoMigrate(&models.User{}, &models.ApiToken{}, &models.BankAccount{})
+	db.AutoMigrate(
+		&models.User{},
+		&models.ApiToken{},
+		&models.BankAccount{},
+		&models.Transfer{},
+	)
 	return db
 }
