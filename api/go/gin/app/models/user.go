@@ -12,4 +12,7 @@ type User struct {
 	Balance   int64     `json:"balance"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+
+	// Relationships
+	BankAccounts []BankAccount `json:"bank_accounts"`
 }

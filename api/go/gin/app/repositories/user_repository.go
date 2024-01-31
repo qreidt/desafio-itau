@@ -20,14 +20,12 @@ func (repo *UserRepository) Create(user *models.User) error {
 
 // FindById Find an user from by ID
 func (repo *UserRepository) FindById(user *models.User, id uint64) error {
-	result := repo.db.First(&user, id)
-	return result.Error
+	return repo.db.First(&user, id).Error
 }
 
 // FindByDocument Find an user from a document
 func (repo *UserRepository) FindByDocument(document string, model *models.User) error {
-	result := repo.db.First(model, "document = ?", document)
-	return result.Error
+	return repo.db.First(model, "document = ?", document).Error
 }
 
 // Update a user

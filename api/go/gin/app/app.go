@@ -10,22 +10,24 @@ import (
 )
 
 type App struct {
-	db           *gorm.DB
 	router       *gin.Engine
-	repositories Repositories
-	services     Services
-	middlewares  Middlewares
-	controllers  Controllers
+	Db           *gorm.DB
+	Repositories Repositories
+	Services     Services
+	Middlewares  Middlewares
+	Controllers  Controllers
 }
 
 type Repositories struct {
-	UserRepository  *repositories.UserRepository
-	TokenRepository *repositories.TokenRepository
+	UserRepository        *repositories.UserRepository
+	TokenRepository       *repositories.TokenRepository
+	BankAccountRepository *repositories.BankAccountRepository
 }
 
 type Services struct {
-	AuthService *services.AuthService
-	UserService *services.UserService
+	AuthService        *services.AuthService
+	UserService        *services.UserService
+	BankAccountService *services.BankAccountService
 }
 
 type Middlewares struct {
@@ -38,51 +40,56 @@ type Controllers struct {
 }
 
 func NewApp(db *gorm.DB) *App {
-	r := Repositories{
-		UserRepository:  repositories.NewUserRepository(db),
-		TokenRepository: repositories.NewTokenRepository(db),
+	app := &App{router: gin.Default(), Db: db}
+
+	app.Repositories = Repositories{
+		UserRepository:        repositories.NewUserRepository(db),
+		TokenRepository:       repositories.NewTokenRepository(db),
+		BankAccountRepository: repositories.NewBankAccountRepository(db),
 	}
 
-	userService := services.NewUserService(r.UserRepository)
-	s := Services{
-		UserService: userService,
-		AuthService: services.NewAuthService(userService, r.UserRepository, r.TokenRepository),
+	app.Services = Services{
+		UserService:        services.NewUserService(db, app.Repositories.UserRepository),
+		AuthService:        services.NewAuthService(app.Repositories.UserRepository, app.Repositories.TokenRepository),
+		BankAccountService: services.NewBankAccountService(app.Repositories.BankAccountRepository),
 	}
 
-	m := Middlewares{AuthMiddleware: middlewares.NewAuthMiddeware(
-		r.UserRepository,
-		r.TokenRepository,
-	)}
-
-	c := Controllers{
-		AuthController: controllers.NewAuthController(s.UserService, s.AuthService),
+	app.Middlewares = Middlewares{
+		AuthMiddleware: middlewares.NewAuthMiddeware(
+			app.Repositories.UserRepository,
+			app.Repositories.TokenRepository,
+		),
 	}
 
-	return &App{
-		db:           db,
-		router:       gin.Default(),
-		repositories: r,
-		services:     s,
-		middlewares:  m,
-		controllers:  c,
+	app.Controllers = Controllers{
+		AuthController: controllers.NewAuthController(
+			app.Services.UserService,
+			app.Services.AuthService,
+			app.Services.BankAccountService,
+			app.Repositories.TokenRepository,
+		),
+		TransactionController: controllers.NewTransactionController(),
 	}
+
+	return app
 }
 
 func (app *App) SetupRoutes() {
-	appControllers := app.controllers
+	appControllers := app.Controllers
 
-	//app.router.GET('/auth', )
 	app.router.POST("/register", appControllers.AuthController.Register)
 	app.router.POST("/login", appControllers.AuthController.Login)
-	//app.router.POST('/logout', )
+	//app.router.POST("/logout", appControllers.AuthController.Logout)
 
-	transfers := app.router.Group("/transfers").Use(app.middlewares.AuthMiddleware.UseAuth)
+	useAuth := app.router.Use(app.Middlewares.AuthMiddleware.UseAuth)
 	{
-		transfers.GET("/", appControllers.TransactionController.Index)
-		transfers.POST("/", appControllers.TransactionController.Store)
-		transfers.GET("/:transfer", appControllers.TransactionController.Show)
-		transfers.PATCH("/:transfer", appControllers.TransactionController.Update)
-		transfers.DELETE("/:transfer", appControllers.TransactionController.Delete)
+		useAuth.GET("/auth", appControllers.AuthController.Auth)
+		transfers := app.router.Group("/transfers")
+		{
+			transfers.GET("/", appControllers.TransactionController.Index)
+			transfers.POST("/", appControllers.TransactionController.Store)
+			transfers.GET("/:transfer", appControllers.TransactionController.Show)
+		}
 	}
 }
 

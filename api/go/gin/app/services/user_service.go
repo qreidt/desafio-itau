@@ -1,43 +1,64 @@
 package services
 
 import (
+	"gorm.io/gorm"
 	"itau-api/app/models"
 	"itau-api/app/repositories"
 	"itau-api/app/util"
 )
 
 type UserService struct {
-	repository *repositories.UserRepository
+	db             *gorm.DB
+	userRepository *repositories.UserRepository
 }
 
-func NewUserService(repository *repositories.UserRepository) *UserService {
-	return &UserService{repository: repository}
+func NewUserService(db *gorm.DB, userRepository *repositories.UserRepository) *UserService {
+	return &UserService{db: db, userRepository: userRepository}
 }
 
 // Store
 
-func (s *UserService) CreateUser(user *models.User) (*models.User, error) {
+func (s *UserService) CreateUser(user *models.User) error {
 
 	// Hash user passowrd
 	if hashedPassword, err := util.HashPassword(user.Password); err != nil {
-		return nil, err
+		return err
 	} else {
 		user.Password = hashedPassword
 	}
 
-	// Save user
-	if err := s.repository.Create(user); err != nil {
-		return nil, err
-	}
+	// Start Transaction
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		userRepository := repositories.NewUserRepository(tx)
+		bankRepository := repositories.NewBankAccountRepository(tx)
 
-	return user, nil
+		// Save user
+		if err := userRepository.Create(user); err != nil {
+			return err
+		}
+
+		bankAccount := models.BankAccount{
+			UserId:  user.ID,
+			Balance: 0,
+		}
+
+		// Create Bank Account
+		if err := bankRepository.Create(&bankAccount); err != nil {
+			return err
+		}
+
+		user.BankAccounts = []models.BankAccount{bankAccount}
+
+		return nil
+
+	})
 }
 
 // Find
 
 func (s *UserService) FindUserByDocument(document string) (*models.User, error) {
 	var user models.User
-	if err := s.repository.FindByDocument(document, &user); err != nil {
+	if err := s.userRepository.FindByDocument(document, &user); err != nil {
 		return nil, err
 	}
 

@@ -11,7 +11,6 @@ func NewTransactionController() *TransactionController {
 }
 
 func (c *TransactionController) Index(ctx *gin.Context) {
-	//
 
 }
 
@@ -20,13 +19,5 @@ func (c *TransactionController) Store(ctx *gin.Context) {
 }
 
 func (c *TransactionController) Show(ctx *gin.Context) {
-
-}
-
-func (c *TransactionController) Update(ctx *gin.Context) {
-
-}
-
-func (c *TransactionController) Delete(ctx *gin.Context) {
 
 }

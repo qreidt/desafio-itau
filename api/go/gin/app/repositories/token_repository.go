@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"gorm.io/gorm"
 	"itau-api/app/models"
-	"math/rand"
+	"itau-api/app/util"
 )
 
 type TokenRepository struct {
@@ -15,36 +15,23 @@ func NewTokenRepository(db *gorm.DB) *TokenRepository {
 	return &TokenRepository{db: db}
 }
 
-const l = 62
-const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
 // Store
 
-func (repo *TokenRepository) Create(userId uint64) (*models.ApiToken, string) {
-	publicToken := randStringBytes(48)
+func (repo *TokenRepository) Create(token *models.ApiToken, userId uint64) (string, error) {
+	publicToken := util.RandStringBytes(48)
 
-	token := models.ApiToken{
-		UserId:      userId,
-		PublicToken: publicToken,
+	token.UserId = userId
+	token.PublicToken = publicToken
+
+	if err := repo.db.Create(&token).Error; err != nil {
+		return "", err
 	}
 
-	repo.db.Create(&token)
-
 	publicToken = fmt.Sprintf("%d|%s", token.ID, publicToken)
-	return &token, publicToken
+	return publicToken, nil
 }
 
 func (repo *TokenRepository) FindByIdAndToken(token *models.ApiToken, tokenId string, tokenString string) error {
 	result := repo.db.First(&token, "id = ? and public_token = ?", tokenId, tokenString)
 	return result.Error
-}
-
-func randStringBytes(n uint8) string {
-	b := make([]byte, n)
-
-	for i := range b {
-		b[i] = letters[rand.Intn(l)]
-	}
-
-	return string(b)
 }

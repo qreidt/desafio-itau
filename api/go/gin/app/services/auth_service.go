@@ -8,18 +8,15 @@ import (
 )
 
 type AuthService struct {
-	UserService     *UserService
 	UserRepository  *repositories.UserRepository
 	TokenRepository *repositories.TokenRepository
 }
 
 func NewAuthService(
-	userService *UserService,
 	userRepository *repositories.UserRepository,
 	tokenRepository *repositories.TokenRepository,
 ) *AuthService {
 	return &AuthService{
-		UserService:     userService,
 		UserRepository:  userRepository,
 		TokenRepository: tokenRepository,
 	}
@@ -27,10 +24,8 @@ func NewAuthService(
 
 func (s *AuthService) AuthenticateUser(document string, password string) (*models.User, string, error) {
 	// Find User By Document
-	var authUser *models.User
-	if user, err := s.UserService.FindUserByDocument(document); err == nil {
-		authUser = user
-	} else {
+	var authUser models.User
+	if err := s.UserRepository.FindByDocument(document, &authUser); err != nil {
 		return nil, "", err
 	}
 
@@ -40,6 +35,6 @@ func (s *AuthService) AuthenticateUser(document string, password string) (*model
 	}
 
 	// Simplify exposed token
-	_, publicToken := s.TokenRepository.Create(authUser.ID)
-	return authUser, publicToken, nil
+	publicToken, _ := s.TokenRepository.Create(&models.ApiToken{}, authUser.ID)
+	return &authUser, publicToken, nil
 }
