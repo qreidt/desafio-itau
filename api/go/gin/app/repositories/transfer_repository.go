@@ -29,7 +29,7 @@ func (r *TransferRepository) GetBySenderOrReceiverUserId(transfers *[]models.Tra
 }
 
 func (r *TransferRepository) FindTransfer(transfer *models.Transfer, transferId uint64) error {
-	return r.db.Preload("SenderUser", selectUserData).Preload("ReceiverUser", selectUserData).Preload("SenderAccount", selectAccountData).Preload("ReceiverAccount", selectAccountData).First(transfer, transferId).Error
+	return r.db.Model(&models.Transfer{}).Preload("SenderUser", selectUserData).Preload("ReceiverUser", selectUserData).Preload("SenderAccount", selectAccountData).Preload("ReceiverAccount", selectAccountData).First(transfer, transferId).Error
 }
 
 func (r *TransferRepository) Create(transfer *models.Transfer) error {

@@ -22,12 +22,14 @@ type Repositories struct {
 	UserRepository        *repositories.UserRepository
 	TokenRepository       *repositories.TokenRepository
 	BankAccountRepository *repositories.BankAccountRepository
+	TransferRepository    *repositories.TransferRepository
 }
 
 type Services struct {
 	AuthService        *services.AuthService
 	UserService        *services.UserService
 	BankAccountService *services.BankAccountService
+	TransferService    *services.TransferService
 }
 
 type Middlewares struct {
@@ -35,8 +37,8 @@ type Middlewares struct {
 }
 
 type Controllers struct {
-	AuthController        *controllers.AuthController
-	TransactionController *controllers.TransactionController
+	AuthController     *controllers.AuthController
+	TransferController *controllers.TransferController
 }
 
 func NewApp(db *gorm.DB) *App {
@@ -46,12 +48,14 @@ func NewApp(db *gorm.DB) *App {
 		UserRepository:        repositories.NewUserRepository(db),
 		TokenRepository:       repositories.NewTokenRepository(db),
 		BankAccountRepository: repositories.NewBankAccountRepository(db),
+		TransferRepository:    repositories.NewTransferRepository(db),
 	}
 
 	app.Services = Services{
 		UserService:        services.NewUserService(db, app.Repositories.UserRepository),
 		AuthService:        services.NewAuthService(app.Repositories.UserRepository, app.Repositories.TokenRepository),
 		BankAccountService: services.NewBankAccountService(app.Repositories.BankAccountRepository),
+		TransferService:    services.NewTransferService(app.Repositories.TransferRepository),
 	}
 
 	app.Middlewares = Middlewares{
@@ -68,7 +72,7 @@ func NewApp(db *gorm.DB) *App {
 			app.Services.BankAccountService,
 			app.Repositories.TokenRepository,
 		),
-		TransactionController: controllers.NewTransactionController(),
+		TransferController: controllers.NewTransferController(app.Services.TransferService),
 	}
 
 	return app
@@ -86,9 +90,9 @@ func (app *App) SetupRoutes() {
 		useAuth.GET("/auth", appControllers.AuthController.Auth)
 		transfers := app.router.Group("/transfers")
 		{
-			transfers.GET("/", appControllers.TransactionController.Index)
-			transfers.POST("/", appControllers.TransactionController.Store)
-			transfers.GET("/:transfer", appControllers.TransactionController.Show)
+			transfers.GET("/", appControllers.TransferController.Index)
+			transfers.POST("/", appControllers.TransferController.Store)
+			transfers.GET("/:transfer", appControllers.TransferController.Show)
 		}
 	}
 }
